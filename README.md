@@ -36,3 +36,13 @@ uv sync
 ```
 uv run fastmcp install main.py
 ```
+
+## Check that the MCP server has been correctly installed
+
+Now you should see the Choose MCP server in the list of installed MCP servers:
+
+```
+cat ~/Library/Application\ Support/Claude/claude_desktop_config.json
+```
+
+Open Claude Desktop and start asking questions.
