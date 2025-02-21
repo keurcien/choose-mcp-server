@@ -1,48 +1,24 @@
 # Choose MCP Server Setup
 
-## Pre-requisites
-
 1. Start by downloading the Claude Desktop Client: https://claude.ai/download
 
-2. Install `uv`
+2. Install the MCP server
 
-```
-brew install uv
-```
+Edit the `claude_desktop_config.json` file (located in `~/Library/Application\ Support/Claude`) and add the following to the mcpServers section:
 
-or
-
-```
-pip install uv
-```
-
-## Install the MCP server
-
-1. Clone the repository
-
-```
-git clone git@github.com:keurcien/choose-mcp-server.git
-cd choose-mcp-server
+```javascript
+{
+	"mcpServers": {
+		"Choose MCP Server": {
+			"command": "uvx",
+			"args": ["choose-mcp-server"],
+			"env": {
+				"PROJECT_ID": YOUR_PROJECT_ID,
+				"DATASET": YOUR_DATASET
+			}
+		}
+	}
+}
 ```
 
-2. Install the dependencies in a virtual environment
-
-```
-uv sync
-```
-
-3. Install the server
-
-```
-uv run mcp install main.py -v PROJECT_ID=YOUR_PROJECT_ID -v DATASET=YOUR_DATASET
-```
-
-## Check that the MCP server has been correctly installed
-
-Now you should see the Choose MCP server in the list of installed MCP servers:
-
-```
-cat ~/Library/Application\ Support/Claude/claude_desktop_config.json
-```
-
-Open Claude Desktop and start asking questions!
+3. Open Claude Desktop and start asking questions!
