@@ -19,7 +19,7 @@ class AppContext:
 @asynccontextmanager
 async def app_lifespan(server: FastMCP) -> AsyncIterator[AppContext]:
     """Manage application lifecycle with type-safe context"""
-    client = bigquery.Client()
+    client = bigquery.Client(project=PROJECT_ID)
     yield AppContext(client=client)
 
 
@@ -98,5 +98,12 @@ def fetch_current_time() -> str:
     return datetime.datetime.now().isoformat()
 
 
-if __name__ == "__main__":
+def run():
+    """
+    Run the MCP server.
+    """
     mcp.run()
+
+
+if __name__ == "__main__":
+    run()
