@@ -1,17 +1,90 @@
+import os
 import datetime
-from fastmcp import FastMCP
-from sqlalchemy import create_engine
-from langchain_community.utilities import SQLDatabase
-from langchain_community.tools.sql_database.tool import (
-    InfoSQLDatabaseTool,
-    ListSQLDatabaseTool,
-)
+from typing import AsyncIterator
+from dataclasses import dataclass
+from contextlib import asynccontextmanager
+from google.cloud import bigquery
+from mcp.server.fastmcp import FastMCP, Context
 
 
-mcp = FastMCP("Choose MCP Server")
-sqlalchemy_url = f"bigquery://choose-data-prod/core"
-engine = create_engine(sqlalchemy_url)
-db = SQLDatabase(engine)
+PROJECT_ID = os.getenv("PROJECT_ID")
+DATASET = os.getenv("DATASET")
+
+
+@dataclass
+class AppContext:
+    client: bigquery.Client
+
+
+@asynccontextmanager
+async def app_lifespan(server: FastMCP) -> AsyncIterator[AppContext]:
+    """Manage application lifecycle with type-safe context"""
+    client = bigquery.Client()
+    yield AppContext(client=client)
+
+
+mcp = FastMCP("Choose MCP Server", lifespan=app_lifespan)
+
+
+@mcp.tool()
+def get_tables(ctx: Context) -> str:
+    """
+    Get the list of tables in the database.
+
+    Returns:
+        str: The list of tables in the database.
+    """
+    client = ctx.request_context.lifespan_context.client
+    query = f"SELECT table_name FROM `{PROJECT_ID}.{DATASET}.INFORMATION_SCHEMA.TABLES`"
+    query_job = client.query(query)
+    results = query_job.result()
+    
+    tables = [row.table_name for row in results]
+    return "\n".join(tables)
+
+
+@mcp.tool()
+def get_table_schema(ctx: Context, table: str) -> str:
+    """
+    Get the schema of a table in the database, along with the description of each available field.
+    
+    Args:
+        table (str): The name of the table in the database.
+
+    Returns:
+        str: The schema of the table in the database.
+    """
+    client = ctx.request_context.lifespan_context.client
+    query = f"SELECT ddl FROM `{PROJECT_ID}.{DATASET}.INFORMATION_SCHEMA.TABLES` WHERE table_name = @table"
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("table", "STRING", table)
+        ]
+    )
+    query_job = client.query(query, job_config=job_config)
+    results = query_job.result()
+    
+    for row in results:
+        return row.ddl
+    return f"Table {table} not found"
+
+
+@mcp.tool()
+def query(ctx: Context, query: str) -> str:
+    """
+    Execute a SQL query against BigQuery and get back the result as dict.
+    Input to this tool is a detailed and correct SQL query, output is a result from the database.
+    If the query is not correct, an error message will be returned.
+    If an error is returned, rewrite the query, check the query, and try again.
+    If you encounter an issue with Unknown column 'xxxx' in 'field list', use get_table_schema to query the correct table fields.
+    """
+    client = ctx.request_context.lifespan_context.client
+    try:
+        query_job = client.query(query)
+        results = [dict(row.items()) for row in query_job.result()]
+        return str(results)
+    except Exception as e:
+        return f"Error: Query failed. {str(e)}. Please rewrite the query, check the query, and try again."
 
 
 @mcp.tool()
@@ -22,49 +95,7 @@ def fetch_current_time() -> str:
     Returns:
         str: The current time in UTC.
     """
-
     return datetime.datetime.now().isoformat()
-
-
-@mcp.tool()
-def get_tables() -> str:
-    """
-    Get the list of tables in the database.
-
-    Returns:
-        str: The list of tables in the database.
-    """
-
-    return ListSQLDatabaseTool(db=db).invoke("")
-
-
-@mcp.tool()
-def get_schema(table: str) -> str:
-    """
-    Get the schema of a table in the database, along with the description of each available field.
-    
-    Args:
-        table (str): The name of the table in the database.
-
-    Returns:
-        str: The schema of the table in the database.
-    """
-    return InfoSQLDatabaseTool(db=db).invoke(table)
-
-
-@mcp.tool()
-def db_query_tool(query: str) -> str:
-    """
-    Execute a SQL query against the database and get back the result.
-    Input to this tool is a detailed and correct SQL query, output is a result from the database.
-    If the query is not correct, an error message will be returned.
-    If an error is returned, rewrite the query, check the query, and try again.
-    If you encounter an issue with Unknown column 'xxxx' in 'field list', use get_schema to query the correct table fields.
-    """
-    result = db.run_no_throw(query)
-    if not result:
-        return "Error: Query failed. Please rewrite your query and try again."
-    return result
 
 
 if __name__ == "__main__":
