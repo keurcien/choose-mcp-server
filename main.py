@@ -40,7 +40,7 @@ def get_tables(ctx: Context) -> str:
     results = query_job.result()
     
     tables = [row.table_name for row in results]
-    return "\n".join(tables)
+    return ", ".join(tables)
 
 
 @mcp.tool()
