@@ -8,14 +8,9 @@ from google.cloud import bigquery
 from mcp.server.fastmcp import FastMCP, Context
 
 
-PROJECT_ID = os.getenv("PROJECT_ID", "choose-data-prod")
-DATASET = os.getenv("DATASET", "core")
-DBT_CATALOG_PATH = os.getenv("DBT_CATALOG_PATH", "/Users/keurcien/Documents/choose/dbt_docs.json")
-
-
-if DBT_CATALOG_PATH:
-    with open(DBT_CATALOG_PATH, "r") as f:
-        catalog = json.load(f)
+PROJECT_ID = os.getenv("PROJECT_ID")
+DATASET = os.getenv("DATASET")
+DBT_MANIFEST_FILEPATH = os.getenv("DBT_MANIFEST_FILEPATH")
 
 
 @dataclass
@@ -34,14 +29,23 @@ mcp = FastMCP("Choose MCP Server", lifespan=app_lifespan)
 
 
 @mcp.tool()
-def load_catalog(ctx: Context) -> str:
+def load_documentation(ctx: Context) -> str:
     """
-    Load the catalog of tables and their descriptions.
+    Load the documentation of all tables.
 
     Returns:
-        str: The full documentation of all tables.
+        str: The full documentation of all tables. Key is the table name, value is the description.
     """
-    return json.dumps(catalog, indent=4)
+    if DBT_MANIFEST_FILEPATH:
+        try:
+            with open(DBT_MANIFEST_FILEPATH, "r") as fh:
+                manifest = json.load(fh)
+                nodes = manifest["nodes"]
+                return json.dumps({v.split(".")[2]: nodes[v]["description"] for _, v in enumerate(manifest["nodes"]) if nodes[v]["schema"]==DATASET}, indent=2)
+        except Exception as e:
+            return f"Error: {str(e)}. Please check the DBT manifest file path and try again."
+    else:
+        return "No documentation found."
 
 
 @mcp.tool()

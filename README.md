@@ -15,14 +15,14 @@ Edit the `claude_desktop_config.json` file (located in `~/Library/Application\ S
       "env": {
         "PROJECT_ID": YOUR_PROJECT_ID,
         "DATASET": YOUR_DATASET,
-        "DBT_CATALOG_PATH": YOUR_DBT_CATALOG
+        "DBT_MANIFEST_FILEPATH": YOUR_DBT_MANIFEST_FILEPATH
       }
     }
   }
 }
 ```
 
-N.B: the dbt catalog is optional.
+N.B: the dbt manifest file path is optional.
 
 3. Open Claude Desktop and start asking questions!
 
