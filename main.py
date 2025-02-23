@@ -1,4 +1,5 @@
 import os
+import json
 import datetime
 from typing import AsyncIterator
 from dataclasses import dataclass
@@ -9,6 +10,12 @@ from mcp.server.fastmcp import FastMCP, Context
 
 PROJECT_ID = os.getenv("PROJECT_ID")
 DATASET = os.getenv("DATASET")
+DBT_CATALOG_PATH = os.getenv("DBT_CATALOG_PATH")
+
+
+if DBT_CATALOG_PATH:
+    with open(DBT_CATALOG_PATH, "r") as f:
+        catalog = json.load(f)
 
 
 @dataclass
@@ -19,11 +26,22 @@ class AppContext:
 @asynccontextmanager
 async def app_lifespan(server: FastMCP) -> AsyncIterator[AppContext]:
     """Manage application lifecycle with type-safe context"""
-    client = bigquery.Client(project=PROJECT_ID)
+    client = bigquery.Client(project=PROJECT_ID, scopes=["https://www.googleapis.com/auth/bigquery.readonly"])
     yield AppContext(client=client)
 
 
 mcp = FastMCP("Choose MCP Server", lifespan=app_lifespan)
+
+
+@mcp.tool()
+def load_catalog(ctx: Context) -> str:
+    """
+    Load the catalog of tables and their descriptions.
+
+    Returns:
+        str: The full documentation of all tables.
+    """
+    return json.dumps(catalog, indent=4)
 
 
 @mcp.tool()

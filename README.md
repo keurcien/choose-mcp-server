@@ -14,12 +14,15 @@ Edit the `claude_desktop_config.json` file (located in `~/Library/Application\ S
 			"args": ["choose-mcp-server"],
 			"env": {
 				"PROJECT_ID": YOUR_PROJECT_ID,
-				"DATASET": YOUR_DATASET
+				"DATASET": YOUR_DATASET,
+				"DBT_CATALOG_PATH": YOUR_DBT_CATALOG
 			}
 		}
 	}
 }
 ```
+
+N.B: the dbt catalog is optional.
 
 3. Open Claude Desktop and start asking questions!
 
