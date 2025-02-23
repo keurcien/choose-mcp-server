@@ -8,17 +8,17 @@ Edit the `claude_desktop_config.json` file (located in `~/Library/Application\ S
 
 ```javascript
 {
-	"mcpServers": {
-		"Choose MCP Server": {
-			"command": "uvx",
-			"args": ["choose-mcp-server"],
-			"env": {
-				"PROJECT_ID": YOUR_PROJECT_ID,
-				"DATASET": YOUR_DATASET,
-				"DBT_CATALOG_PATH": YOUR_DBT_CATALOG
-			}
-		}
-	}
+  "mcpServers": {
+    "Choose MCP Server": {
+      "command": "uvx",
+      "args": ["choose-mcp-server"],
+      "env": {
+        "PROJECT_ID": YOUR_PROJECT_ID,
+        "DATASET": YOUR_DATASET,
+        "DBT_CATALOG_PATH": YOUR_DBT_CATALOG
+      }
+    }
+  }
 }
 ```
 
@@ -32,7 +32,6 @@ For Windows users, you may need to add the `APPDATA` environment variable to you
 
 ```javascript
 "env": {
-    ...,
-	"APPDATA": "C:\\Users\\YOUR_USERNAME\\AppData\\Roaming",
+  "APPDATA": "C:\\Users\\YOUR_USERNAME\\AppData\\Roaming",
 }
 ```

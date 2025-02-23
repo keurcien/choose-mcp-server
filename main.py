@@ -8,9 +8,9 @@ from google.cloud import bigquery
 from mcp.server.fastmcp import FastMCP, Context
 
 
-PROJECT_ID = os.getenv("PROJECT_ID")
-DATASET = os.getenv("DATASET")
-DBT_CATALOG_PATH = os.getenv("DBT_CATALOG_PATH")
+PROJECT_ID = os.getenv("PROJECT_ID", "choose-data-prod")
+DATASET = os.getenv("DATASET", "core")
+DBT_CATALOG_PATH = os.getenv("DBT_CATALOG_PATH", "/Users/keurcien/Documents/choose/dbt_docs.json")
 
 
 if DBT_CATALOG_PATH:
@@ -26,7 +26,7 @@ class AppContext:
 @asynccontextmanager
 async def app_lifespan(server: FastMCP) -> AsyncIterator[AppContext]:
     """Manage application lifecycle with type-safe context"""
-    client = bigquery.Client(project=PROJECT_ID, scopes=["https://www.googleapis.com/auth/bigquery.readonly"])
+    client = bigquery.Client(project=PROJECT_ID)
     yield AppContext(client=client)
 
 
