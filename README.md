@@ -2,7 +2,13 @@
 
 1. Start by downloading the Claude Desktop Client: https://claude.ai/download
 
-2. Install the MCP server
+2. Install uv
+
+```
+brew install uv
+```
+
+3. Install the MCP server
 
 Edit the `claude_desktop_config.json` file (located in `~/Library/Application\ Support/Claude`) and add the following to the mcpServers section:
 
@@ -24,7 +30,13 @@ Edit the `claude_desktop_config.json` file (located in `~/Library/Application\ S
 
 N.B: the dbt manifest file path is optional.
 
-3. Open Claude Desktop and start asking questions!
+4. Log into Google Cloud and update your Application Default Credentials (ADC)
+
+```
+gcloud auth login --update-adc
+```
+
+5. Open Claude Desktop and start asking questions!
 
 ## Troubleshooting
 
