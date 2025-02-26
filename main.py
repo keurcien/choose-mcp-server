@@ -9,7 +9,7 @@ from mcp.server.fastmcp import FastMCP, Context
 
 
 PROJECT_ID = os.getenv("PROJECT_ID")
-DATASET = os.getenv("DATASET")
+DATASETS = os.getenv("DATASETS").split(",") if os.getenv("DATASETS") else [os.getenv("DATASET")] 
 DBT_MANIFEST_FILEPATH = os.getenv("DBT_MANIFEST_FILEPATH")
 
 
@@ -41,7 +41,7 @@ def load_documentation(ctx: Context) -> str:
             with open(DBT_MANIFEST_FILEPATH, "r") as fh:
                 manifest = json.load(fh)
                 nodes = manifest["nodes"]
-                return json.dumps({v.split(".")[2]: nodes[v]["description"] for _, v in enumerate(manifest["nodes"]) if nodes[v]["schema"]==DATASET}, indent=2)
+                return json.dumps({f"{nodes[v]['schema']}.{v.split('.')[2]}": nodes[v]["description"] for _, v in enumerate(manifest["nodes"]) if nodes[v]["schema"] in DATASETS}, indent=2)
         except Exception as e:
             return f"Error: {str(e)}. Please check the DBT manifest file path and try again."
     else:
@@ -54,30 +54,35 @@ def get_tables(ctx: Context) -> str:
     Get the list of tables in the database.
 
     Returns:
-        str: The list of tables in the database.
+        str: The list of tables in the database, prefixed by the dataset name.
     """
     client = ctx.request_context.lifespan_context.client
-    query = f"SELECT table_name FROM `{PROJECT_ID}.{DATASET}.INFORMATION_SCHEMA.TABLES`"
-    query_job = client.query(query)
-    results = query_job.result()
+
+    tables = []
+
+    for dataset in DATASETS:
+        query = f"SELECT table_name FROM `{PROJECT_ID}.{dataset}.INFORMATION_SCHEMA.TABLES`"
+        query_job = client.query(query)
+        results = query_job.result()
+        tables.extend([f"{dataset}.{row.table_name}" for row in results])
     
-    tables = [row.table_name for row in results]
     return ", ".join(tables)
 
 
 @mcp.tool()
-def get_table_schema(ctx: Context, table: str) -> str:
+def get_table_schema(ctx: Context, dataset: str, table: str) -> str:
     """
     Get the schema of a table in the database, along with the description of each available field.
     
     Args:
-        table (str): The name of the table in the database.
+        dataset (str): The name of the dataset.
+        table (str): The name of the table in the database, prefixed with the dataset.
 
     Returns:
         str: The schema of the table in the database.
     """
     client = ctx.request_context.lifespan_context.client
-    query = f"SELECT ddl FROM `{PROJECT_ID}.{DATASET}.INFORMATION_SCHEMA.TABLES` WHERE table_name = @table"
+    query = f"SELECT ddl FROM `{PROJECT_ID}.{dataset}.INFORMATION_SCHEMA.TABLES` WHERE table_name = @table"
     job_config = bigquery.QueryJobConfig(
         query_parameters=[
             bigquery.ScalarQueryParameter("table", "STRING", table)

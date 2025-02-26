@@ -20,7 +20,7 @@ Edit the `claude_desktop_config.json` file (located in `~/Library/Application\ S
       "args": ["choose-mcp-server"],
       "env": {
         "PROJECT_ID": YOUR_PROJECT_ID,
-        "DATASET": YOUR_DATASET,
+        "DATASETS": DATASET_1,DATASET_2,DATASET_3
         "DBT_MANIFEST_FILEPATH": YOUR_DBT_MANIFEST_FILEPATH
       }
     }
